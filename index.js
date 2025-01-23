@@ -1,6 +1,6 @@
-import { addUserHandler } from '../api/add-user.js';
-import { loginHandler } from '../api/login.js';
-import { addDataHandler, updateDataHandler, getDataHandler } from '../api/data.js';
+import { addUserHandler } from './api/add-user.js';
+import { loginHandler } from './api/login.js';
+import { addDataHandler, updateDataHandler, getDataHandler } from './api/data.js';
 
 // Export handler untuk Vercel
 export default async function handler(req, res) {

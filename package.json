@@ -6,10 +6,12 @@
     "dev": "vercel dev"
   },
   "dependencies": {
-    "express": "^4.17.1",
     "firebase": "^9.0.0",
     "bcrypt": "^5.0.0",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "api-add-user": "file:api/add-user.js",
+    "api-login": "file:api/login.js",
+    "api-data": "file:api/data.js"
   }
 }
 
