@@ -2,29 +2,30 @@ import { addUserHandler } from './api/add-user.js';
 import { loginHandler } from './api/login.js';
 import { addDataHandler, updateDataHandler, getDataHandler } from './api/data.js';
 
-// Export handler untuk Vercel
+// Ekspor handler utama untuk Vercel
 export default async function handler(req, res) {
-  // Routes
-  if (req.method === 'POST' && req.url === '/add-user') {
-    return addUserHandler(req, res);
-  }
+  // Menentukan rute berdasarkan URL dan metode HTTP
+  const { url, method } = req;
 
-  if (req.method === 'POST' && req.url === '/login') {
-    return loginHandler(req, res);
-  }
+  try {
+    if (url === '/add-user' && method === 'POST') {
+      return addUserHandler(req, res);
+    } else if (url === '/login' && method === 'POST') {
+      return loginHandler(req, res);
+    } else if (url === '/api/data' && method === 'POST') {
+      return addDataHandler(req, res);
+    } else if (url.startsWith('/api/data') && method === 'PUT') {
+      // Menangkap ID dari URL (contoh: /api/data/:id)
+      const id = url.split('/')[3]; // Mengambil ID dari URL
+      req.params = { id }; // Menyisipkan ID ke objek `req`
+      return updateDataHandler(req, res);
+    } else if (url === '/api/data' && method === 'GET') {
+      return getDataHandler(req, res);
+    }
 
-  if (req.method === 'POST' && req.url === '/api/data') {
-    return addDataHandler(req, res);
+    // Jika rute tidak ditemukan
+    res.status(404).json({ message: 'Rute tidak ditemukan' });
+  } catch (error) {
+    res.status(500).json({ message: 'Terjadi kesalahan', error: error.message });
   }
-
-  if (req.method === 'PUT' && req.url.startsWith('/api/data/:id')) {
-    return updateDataHandler(req, res);
-  }
-
-  if (req.method === 'GET' && req.url === '/api/data') {
-    return getDataHandler(req, res);
-  }
-
-  // Jika metode HTTP tidak valid
-  res.status(405).json({ message: 'Metode tidak diizinkan' });
 }
