@@ -8,9 +8,9 @@ export default async function handler(req, res) {
   const { url, method } = req;
 
   try {
-    if (url === '/add-user' && method === 'POST') {
+    if (url === '/api/add-user' && method === 'POST') {
       return addUserHandler(req, res);
-    } else if (url === '/login' && method === 'POST') {
+    } else if (url === '/api/login' && method === 'POST') {
       return loginHandler(req, res);
     } else if (url === '/api/data' && method === 'POST') {
       return addDataHandler(req, res);
