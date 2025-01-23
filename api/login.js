@@ -11,21 +11,31 @@ const loginHandler = async (req, res) => {
   }
 
   try {
-    const userSnapshot = await getDocs(query(collection(db, 'users'), where("username", "==", username)));
-    const user = userSnapshot.docs.map(doc => doc.data()).find(user => user.username === username);
+    // Ambil data pengguna berdasarkan username
+    const userSnapshot = await getDocs(
+      query(collection(db, 'users'), where('username', '==', username))
+    );
+    const user = userSnapshot.docs
+      .map((doc) => doc.data())
+      .find((user) => user.username === username);
 
-    if (!user) return res.status(404).json({ message: 'Pengguna tidak ditemukan' });
+    if (!user) {
+      return res.status(404).json({ message: 'Pengguna tidak ditemukan' });
+    }
 
+    // Verifikasi password
     const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) return res.status(401).json({ message: 'Password salah' });
+    if (!passwordMatch) {
+      return res.status(401).json({ message: 'Password salah' });
+    }
 
+    // Berhasil login
     res.status(200).json({ message: 'Login berhasil', role: user.userRole });
   } catch (error) {
-    res.status(500).json({ message: 'Terjadi kesalahan saat login', error: error.message });
+    res
+      .status(500)
+      .json({ message: 'Terjadi kesalahan saat login', error: error.message });
   }
 };
 
-// Ekspor handler sebagai fungsi default untuk Vercel
-export default async (req, res) => {
-  return loginHandler(req, res);
-};
+export default loginHandler;
