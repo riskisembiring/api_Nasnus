@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
-import { addUserHandler } from './api/add-user.js';
-import { loginHandler } from './api/login.js';
-import { addDataHandler, updateDataHandler, getDataHandler } from './api/data.js';
+import { addUserHandler } from '../api/add-user.js';
+import { loginHandler } from '../api/login.js';
+import { addDataHandler, updateDataHandler, getDataHandler } from '../api/data.js';
 
 const app = express();
 
@@ -17,5 +17,7 @@ app.post('/api/data', addDataHandler); // Menggunakan addDataHandler pada route 
 app.put('/api/data/:id', updateDataHandler); // Menggunakan updateDataHandler untuk update data
 app.get('/api/data', getDataHandler);
 
-// Ekspor handler untuk Vercel
-export default app;
+// Export handler untuk Vercel
+export default function handler(req, res) {
+  app(req, res);
+}

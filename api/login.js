@@ -1,50 +1,29 @@
-import { collection, addDoc, getDocs, updateDoc, doc, getDoc } from 'firebase/firestore';
+import bcrypt from 'bcrypt';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../config/firebase-config.js';
 
-// Add Data
-const addDataHandler = async (req, res) => {
-  try {
-    const docRef = await addDoc(collection(db, 'data'), req.body);
-    res.status(201).json({ message: 'Data berhasil disimpan!', id: docRef.id });
-  } catch (error) {
-    res.status(500).json({ message: 'Error saat menyimpan data', error: error.message });
-  }
-};
+// Login User Handler
+const loginHandler = async (req, res) => {
+  const { username, password } = req.body;
 
-// Update Data
-const updateDataHandler = async (req, res) => {
-  const { id } = req.params;
+  if (!username || !password) {
+    return res.status(400).json({ message: 'Username dan password diperlukan' });
+  }
 
   try {
-    const docRef = doc(db, 'data', id);
-    const docSnap = await getDoc(docRef);
-    if (!docSnap.exists()) return res.status(404).json({ message: 'Dokumen tidak ditemukan' });
+    const userSnapshot = await getDocs(query(collection(db, 'users'), where("username", "==", username)));
+    const user = userSnapshot.docs.map(doc => doc.data()).find(user => user.username === username);
 
-    await updateDoc(docRef, req.body);
-    res.status(200).json({ message: 'Data berhasil diperbarui' });
+    if (!user) return res.status(404).json({ message: 'Pengguna tidak ditemukan' });
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) return res.status(401).json({ message: 'Password salah' });
+
+    res.status(200).json({ message: 'Login berhasil', role: user.userRole });
   } catch (error) {
-    res.status(500).json({ message: 'Error saat memperbarui data', error: error.message });
+    res.status(500).json({ message: 'Terjadi kesalahan saat login', error: error.message });
   }
 };
 
-// Get Data
-const getDataHandler = async (req, res) => {
-  try {
-    const snapshot = await getDocs(collection(db, 'data'));
-    const dataList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    res.status(200).json(dataList);
-  } catch (error) {
-    res.status(500).json({ message: 'Terjadi kesalahan saat mengambil data', error: error.message });
-  }
-};
-
-// Ekspor handler sebagai function untuk digunakan di Vercel
-export default async (req, res) => {
-  if (req.method === 'GET') {
-    return getDataHandler(req, res);
-  } else if (req.method === 'POST') {
-    return addDataHandler(req, res);
-  } else if (req.method === 'PUT') {
-    return updateDataHandler(req, res);
-  }
-};
+// Mengekspor handler untuk digunakan di file lain
+export { loginHandler };
