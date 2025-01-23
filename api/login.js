@@ -25,5 +25,7 @@ const loginHandler = async (req, res) => {
   }
 };
 
-// Mengekspor handler untuk digunakan di file lain
-export { loginHandler };
+// Ekspor handler sebagai fungsi default untuk Vercel
+export default async (req, res) => {
+  return loginHandler(req, res);
+};
