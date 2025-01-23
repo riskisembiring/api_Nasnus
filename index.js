@@ -1,6 +1,13 @@
+import express from 'express';
+import cors from 'cors';
 import { addUserHandler } from './api/add-user.js';
 import { loginHandler } from './api/login.js';
 import { addDataHandler, updateDataHandler, getDataHandler } from './api/data.js';
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
 
 // Ekspor handler utama untuk Vercel
 export default async function handler(req, res) {
