@@ -13,7 +13,7 @@ const addDataHandler = async (req, res) => {
 
 // Update Data
 const updateDataHandler = async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.query; // Change from params to query for Vercel compatibility
 
   try {
     const docRef = doc(db, 'data', id);
@@ -40,7 +40,6 @@ const getDataHandler = async (req, res) => {
 
 // Ekspor handler sebagai fungsi default untuk Vercel
 export default async (req, res) => {
-  // Menentukan rute berdasarkan metode HTTP
   if (req.method === 'POST') {
     return addDataHandler(req, res);
   } else if (req.method === 'PUT') {
@@ -49,6 +48,5 @@ export default async (req, res) => {
     return getDataHandler(req, res);
   }
 
-  // Jika metode HTTP tidak cocok
   res.status(405).json({ message: 'Metode tidak diizinkan' });
 };

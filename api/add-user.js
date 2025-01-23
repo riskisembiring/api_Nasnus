@@ -1,10 +1,6 @@
-import express from 'express';
 import bcrypt from 'bcrypt';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../config/firebase-config.js';
-
-const app = express();
-app.use(express.json());
 
 // Register User
 const addUserHandler = async (req, res) => {
@@ -23,7 +19,4 @@ const addUserHandler = async (req, res) => {
   }
 };
 
-// Ekspor handler sebagai function untuk digunakan di Vercel
-export default async (req, res) => {
-  return addUserHandler(req, res);
-};
+export default addUserHandler;
