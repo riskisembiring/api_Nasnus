@@ -3,7 +3,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../config/firebase-config.js';
 
 // Login User Handler
-const loginHandler = async (req, res) => {
+export const loginHandler = async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
