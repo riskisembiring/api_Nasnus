@@ -28,9 +28,11 @@ export const loginHandler = async (req, res) => {
     if (!passwordMatch) {
       return res.status(401).json({ message: 'Password salah' });
     }
-
-    // Berhasil login
-    res.status(200).json({ message: 'Login berhasil', role: user.userRole });
+    res.status(200).json({ 
+      message: `Berhasil login sebagai '${user.userRole}'`, 
+      role: user.userRole, 
+      username: user.username 
+    });
   } catch (error) {
     res
       .status(500)
