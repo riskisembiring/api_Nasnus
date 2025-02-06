@@ -1,6 +1,8 @@
 import { addUserHandler } from './api/add-user.js';
 import { loginHandler } from './api/login.js';
+import { uploadFilesMiddleware, submitKreditHandler } from './api/kredit.js';
 import { addDataHandler, updateDataHandler, getDataHandler } from './api/data.js';
+import { addDataMakHandler, getDataMakHandler } from './api/data-mak.js';
 
 // Fungsi untuk menangani CORS
 const setCorsHeaders = (res) => {
@@ -23,6 +25,7 @@ export default async function handler(req, res) {
     // Menambahkan CORS untuk setiap respons
     setCorsHeaders(res);
 
+    // Menangani rute sesuai dengan URL dan metode
     if (url === '/api/add-user' && method === 'POST') {
       return addUserHandler(req, res);
     } else if (url === '/api/login' && method === 'POST') {
@@ -35,11 +38,19 @@ export default async function handler(req, res) {
       return updateDataHandler(req, res);
     } else if (url === '/api/data' && method === 'GET') {
       return getDataHandler(req, res);
+    } else if (url === '/api/submit-kredit' && method === 'POST') {
+      return submitKreditHandler(req, res);
+    } else if (url === '/api/data-mak' && method === 'POST') {
+      return addDataMakHandler(req, res);
+    } else if (url === '/api/data-mak' && method === 'GET') {
+      return getDataMakHandler(req, res);
     }
 
     // Jika rute tidak ditemukan
-    res.status(404).json({ message: 'Rute tidak ditemukan' });
+    return res.status(404).json({ message: 'Rute tidak ditemukan' });
   } catch (error) {
-    res.status(500).json({ message: 'Terjadi kesalahan', error: error.message });
+    // Tangani error dengan mengirimkan respons error yang lebih baik
+    console.error('Error handling request:', error);
+    return res.status(500).json({ message: 'Terjadi kesalahan pada server', error: error.message });
   }
 }
