@@ -10,13 +10,16 @@
     "api-add-user": "file:api/add-user.js",
     "api-data": "file:api/data.js",
     "api-login": "file:api/login.js",
+    "axios": "^1.7.9",
     "bcrypt": "^5.0.0",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "firebase": "^9.0.0",
     "formidable": "^3.5.2",
+    "fs": "^0.0.1-security",
     "googleapis": "^144.0.0",
     "multer": "^1.4.5-lts.1",
+    "readline": "^1.3.0",
     "uuid": "^11.0.5"
   }
 }

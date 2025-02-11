@@ -3,6 +3,11 @@ import { loginHandler } from './api/login.js';
 import { uploadFilesMiddleware, submitKreditHandler } from './api/kredit.js';
 import { addDataHandler, updateDataHandler, getDataHandler } from './api/data.js';
 import { addDataMakHandler, getDataMakHandler } from './api/data-mak.js';
+// import { uploadImageHandler } from './api/upload-file.js';
+import { uploadImagekitHandler } from './api/upload.js';
+import multer from 'multer';
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Fungsi untuk menangani CORS
 const setCorsHeaders = (res) => {
@@ -44,7 +49,26 @@ export default async function handler(req, res) {
       return addDataMakHandler(req, res);
     } else if (url === '/api/data-mak' && method === 'GET') {
       return getDataMakHandler(req, res);
-    }
+    // } else if (url === '/api/upload' && method === 'POST') {
+    //   return upload.single('file')(req, res, (err) => {
+    //     if (err) {
+    //       return res.status(500).json({ message: 'Terjadi kesalahan saat meng-upload file', error: err.message });
+    //     }
+    //     return uploadImageHandler(req, res);  // Panggil handler uploadImage
+    //   });
+    } else if (url === '/api/upload' && method === 'POST') {
+    // Gunakan middleware multer untuk menangani upload file
+    return upload.single('file')(req, res, (err) => {
+      if (err) {
+        return res.status(500).json({ 
+          message: 'Terjadi kesalahan saat meng-upload file', 
+          error: err.message 
+        });
+      }
+      // Setelah file berhasil diproses, panggil handler untuk upload ke ImageKit
+      return uploadImagekitHandler(req, res);
+    });
+  }
 
     // Jika rute tidak ditemukan
     return res.status(404).json({ message: 'Rute tidak ditemukan' });
