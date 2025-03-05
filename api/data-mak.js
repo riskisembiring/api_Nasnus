@@ -12,7 +12,7 @@ export const addDataMakHandler = async (req, res) => {
     } = req.body;
   
     // Validasi data utama yang wajib
-    if (!namaDebitur || !nomorMak) {
+    if (!namaDebitur || !nomorMak || !tanggalMak || !namaAccOfficer || !noTelpDeb) {
       return res.status(400).json({ message: 'Data tidak lengkap atau wajib diisi.' });
     }
   
@@ -76,7 +76,6 @@ export const addDataMakHandler = async (req, res) => {
         });
     }
   };
-  
 
 // Fungsi untuk mengambil data MAK
 export const getDataMakHandler = async (req, res) => {
