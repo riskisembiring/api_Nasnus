@@ -8,11 +8,11 @@ app.use(express.json());
 
 // Register User Handler
 export const addUserHandler = async (req, res) => {
-  const { username, userRole, password } = req.body;
+const { username, userRole, password, email, phone, fullName, address } = req.body;
 
   // Validasi input
-  if (!username || !userRole || !password) {
-    return res.status(400).json({ message: 'Semua field harus diisi!' });
+if (!username || !userRole || !password) {
+    return res.status(400).json({ message: 'Username, userRole, dan password wajib diisi! Email dan phone opsional.' });
   }
 
   try {
@@ -24,6 +24,14 @@ export const addUserHandler = async (req, res) => {
       username,
       userRole,
       password: hashedPassword,
+      email: email || null,
+      phone: phone || null,
+      fullName: fullName || null,
+      address: address || null,
+      emailVerified: false,
+      phoneVerified: false,
+      createdAt: new Date(),
+      isActive: true
     });
 
     // Mengembalikan response sukses

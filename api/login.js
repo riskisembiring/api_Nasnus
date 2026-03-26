@@ -23,6 +23,20 @@ export const loginHandler = async (req, res) => {
       return res.status(404).json({ message: 'Pengguna tidak ditemukan' });
     }
 
+    // Check if user is active
+    if (!user.isActive) {
+      return res.status(403).json({ message: 'Akun tidak aktif. Hubungi admin.' });
+    }
+
+    // Check if email is verified
+    // if (!user.emailVerified) {
+    //   return res.status(403).json({ 
+    //     message: 'Silahkan lengkapi data terlebih dahulu. Verifikasi email Anda.', 
+    //     needsVerification: true, 
+    //     nextStep: 'update-profile' 
+    //   });
+    // }
+
     // Verifikasi password
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
