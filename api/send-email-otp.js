@@ -8,6 +8,12 @@ import {
   getDocs
 } from "firebase/firestore";
 import { db } from "../config/firebase-config.js";
+import { loadLocalEnv } from "../config/load-env.js";
+
+loadLocalEnv();
+
+const gmailUser = process.env.GMAIL_USER;
+const gmailPass = process.env.GMAIL_PASS;
 
 // Transporter Gmail
 const transporter = nodemailer.createTransport({
@@ -15,8 +21,8 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false,
   auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS
+    user: gmailUser,
+    pass: gmailPass
   }
 });
 
@@ -26,6 +32,13 @@ const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString()
 // Send Email OTP Handler
 export const sendEmailOTPHandler = async (req, res) => {
   try {
+    if (!gmailUser || !gmailPass) {
+      return res.status(500).json({
+        message: "Konfigurasi email belum lengkap",
+        error: "GMAIL_USER atau GMAIL_PASS belum tersedia di environment"
+      });
+    }
+
     const { username, email } = req.body;
 
     if (!username || !email) {
@@ -74,7 +87,7 @@ export const sendEmailOTPHandler = async (req, res) => {
 
     // Kirim email
     await transporter.sendMail({
-      from: `"Nasional Nusantara" <${process.env.GMAIL_USER}>`,
+      from: `"Nasional Nusantara" <${gmailUser}>`,
       to: email,
       subject: "Kode Verifikasi OTP",
       html: `
@@ -95,7 +108,7 @@ export const sendEmailOTPHandler = async (req, res) => {
     console.error("OTP EMAIL ERROR:", error);
 
     return res.status(500).json({
-      message: "Gagal mengirim OTP email",
+      message: "Gagal mengirim OTP email nih",
       error: error.message
     });
   }
