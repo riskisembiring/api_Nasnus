@@ -17,7 +17,7 @@ import {
   deleteDataMakHandler,
 } from "./api/data-mak.js";
 import { uploadImagekitHandler } from "./api/upload.js";
-import { uploadImagekitHandlerMax3 } from "./api/uploadMax3.js";
+import { uploadImagekitHandlerMak } from "./api/uploadMak.js";
 import { deleteImagekitHandler } from "./api/delete-imagekit.js";
 import { cleanupDataHandler } from "./api/cleanup-data.js";
 import { updateUserHandler } from "./api/update-user.js";
@@ -92,21 +92,15 @@ export default async function handler(req, res) {
         }
         return uploadImagekitHandler(req, res);
       });
-    } else if (url === "/api/uploadMax3" && method === "POST") {
-      return upload.array("files[]", 3)(req, res, (err) => {
-        // Maksimal 3 file
+    } else if (url === "/api/uploadMak" && method === "POST") {
+      return upload.single("file")(req, res, (err) => {
         if (err) {
           return res.status(500).json({
-            message: "Terjadi kesalahan saat meng-upload filesss",
+            message: "Terjadi kesalahan saat meng-upload file",
             error: err.message,
           });
         }
-        if (req.files.length > 3) {
-          return res
-            .status(400)
-            .json({ message: "Anda hanya dapat meng-upload maksimal 3 foto." });
-        }
-        return uploadImagekitHandlerMax3(req, res);
+        return uploadImagekitHandlerMak(req, res);
       });
     } else if (url === "/api/delete-imagekit" && method === "POST") {
       return deleteImagekitHandler(req, res);
