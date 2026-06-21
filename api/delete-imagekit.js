@@ -1,24 +1,22 @@
 import axios from "axios";
+import { createImagekitAuthHeader } from "../config/imagekit.js";
 
 export const deleteImagekitHandler = async (req, res) => {
   try {
-    const privateKey = "private_5AhqwfLNexuB+St9QoDexd+y5hs=";
     const folder = "bprNasnus/";
 
-    // Hitung tanggal 3 bulan yang lalu
     const cutoffDate = new Date();
     cutoffDate.setMonth(cutoffDate.getMonth() - 3);
 
-    const authHeader = `Basic ${Buffer.from(privateKey + ":").toString("base64")}`;
+    const authHeader = createImagekitAuthHeader();
 
-    // Ambil list file
     const listResponse = await axios.get(
       `https://api.imagekit.io/v1/files?path=${encodeURIComponent(folder)}&limit=1000`,
       {
         headers: {
           Authorization: authHeader,
         },
-      }
+      },
     );
 
     const files = listResponse.data || [];
@@ -36,14 +34,11 @@ export const deleteImagekitHandler = async (req, res) => {
 
       if (createdAt < cutoffDate) {
         try {
-          await axios.delete(
-            `https://api.imagekit.io/v1/files/${file.fileId}`,
-            {
-              headers: {
-                Authorization: authHeader,
-              },
-            }
-          );
+          await axios.delete(`https://api.imagekit.io/v1/files/${file.fileId}`, {
+            headers: {
+              Authorization: authHeader,
+            },
+          });
 
           console.log("Deleted:", file.name);
           deletedCount++;
