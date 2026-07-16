@@ -21,9 +21,50 @@ import { uploadImagekitHandlerMak } from "./api/uploadMak.js";
 import { deleteImagekitHandler } from "./api/delete-imagekit.js";
 import { cleanupDataHandler } from "./api/cleanup-data.js";
 import { updateUserHandler } from "./api/update-user.js";
-import multer from "multer";
+import formidable from "formidable";
+import { readFile, unlink } from "node:fs/promises";
 
-const upload = multer({ storage: multer.memoryStorage() });
+const parseUploadedFile = async (req) => {
+  const form = formidable({ multiples: false });
+
+  const { files } = await new Promise((resolve, reject) => {
+    form.parse(req, (err, fields, parsedFiles) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      resolve({ fields, files: parsedFiles });
+    });
+  });
+
+  const uploadedFile = Array.isArray(files.file) ? files.file[0] : files.file;
+
+  if (!uploadedFile) {
+    return null;
+  }
+
+  const buffer = await readFile(uploadedFile.filepath);
+
+  try {
+    await unlink(uploadedFile.filepath);
+  } catch (error) {
+    console.warn("Failed to remove temporary upload file:", error.message);
+  }
+
+  return {
+    buffer,
+    originalname: uploadedFile.originalFilename || uploadedFile.newFilename,
+    mimetype: uploadedFile.mimetype,
+    size: uploadedFile.size,
+  };
+};
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 // Fungsi untuk menangani CORS
 const setCorsHeaders = (res) => {
@@ -83,25 +124,11 @@ export default async function handler(req, res) {
     } else if (url === "/api/delete-mak" && method === "DELETE") {
       return deleteDataMakHandler(req, res);
     } else if (url === "/api/upload" && method === "POST") {
-      return upload.single("file")(req, res, (err) => {
-        if (err) {
-          return res.status(500).json({
-            message: "Terjadi kesalahan saat meng-upload file",
-            error: err.message,
-          });
-        }
-        return uploadImagekitHandler(req, res);
-      });
+      req.file = await parseUploadedFile(req);
+      return uploadImagekitHandler(req, res);
     } else if (url === "/api/uploadMak" && method === "POST") {
-      return upload.single("file")(req, res, (err) => {
-        if (err) {
-          return res.status(500).json({
-            message: "Terjadi kesalahan saat meng-upload file",
-            error: err.message,
-          });
-        }
-        return uploadImagekitHandlerMak(req, res);
-      });
+      req.file = await parseUploadedFile(req);
+      return uploadImagekitHandlerMak(req, res);
     } else if (url === "/api/delete-imagekit" && method === "POST") {
       return deleteImagekitHandler(req, res);
     } else if (url === "/api/cleanup-data" && method === "POST") {
