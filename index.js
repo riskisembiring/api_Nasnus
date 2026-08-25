@@ -21,13 +21,26 @@ import { uploadImagekitHandlerMak } from "./api/uploadMak.js";
 import { deleteImagekitHandler } from "./api/delete-imagekit.js";
 import { cleanupDataHandler } from "./api/cleanup-data.js";
 import { updateUserHandler } from "./api/update-user.js";
+import {
+  buildDashboardFromWorkbook,
+  buildSlideDashboardFromWorkbook,
+  SUPPORTED_EXTENSIONS,
+} from "./api/dashboardExcelService.js";
+import {
+  logoutHandler,
+  requireActiveSession,
+  validateSessionHandler,
+} from "./api/session.js";
 import formidable from "formidable";
 import { readFile, unlink } from "node:fs/promises";
 
 const parseUploadedFile = async (req) => {
-  const form = formidable({ multiples: false });
+  const form = formidable({
+    multiples: false,
+    maxFileSize: 15 * 1024 * 1024,
+  });
 
-  const { files } = await new Promise((resolve, reject) => {
+  const { files, fields } = await new Promise((resolve, reject) => {
     form.parse(req, (err, fields, parsedFiles) => {
       if (err) {
         reject(err);
@@ -57,6 +70,7 @@ const parseUploadedFile = async (req) => {
     originalname: uploadedFile.originalFilename || uploadedFile.newFilename,
     mimetype: uploadedFile.mimetype,
     size: uploadedFile.size,
+    fields,
   };
 };
 
@@ -76,9 +90,31 @@ const setCorsHeaders = (res) => {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization"); // Header yang diizinkan
 };
 
+const protectedRoutes = [
+  { url: "/api/data", methods: ["GET", "POST"] },
+  { prefix: "/api/data/", methods: ["PUT"] },
+  { url: "/api/submit-kredit", methods: ["POST"] },
+  { url: "/api/data-mak", methods: ["GET", "POST"] },
+  { prefix: "/api/update-mak", methods: ["PUT"] },
+  { url: "/api/delete-mak", methods: ["DELETE"] },
+  { url: "/api/upload", methods: ["POST"] },
+  { url: "/api/uploadMak", methods: ["POST"] },
+  { url: "/api/delete-imagekit", methods: ["POST"] },
+  { url: "/api/cleanup-data", methods: ["POST"] },
+  { url: "/api/update-user", methods: ["PUT"] },
+];
+
+const routeNeedsSession = (url, method) => {
+  return protectedRoutes.some((route) => {
+    const urlMatches = route.url ? route.url === url : url.startsWith(route.prefix);
+    return urlMatches && route.methods.includes(method);
+  });
+};
+
 // Ekspor handler utama untuk Vercel
 export default async function handler(req, res) {
-  const { url, method } = req;
+  const { method } = req;
+  const url = req.url?.split("?")[0] || "/";
 
   // Menangani preflight request (OPTIONS) untuk CORS
   if (method === "OPTIONS") {
@@ -90,11 +126,23 @@ export default async function handler(req, res) {
     // Menambahkan CORS untuk setiap respons
     setCorsHeaders(res);
 
+    if (routeNeedsSession(url, method)) {
+      const hasActiveSession = await requireActiveSession(req, res);
+
+      if (!hasActiveSession) {
+        return;
+      }
+    }
+
     // Menangani rute sesuai dengan URL dan metode
     if (url === "/api/add-user" && method === "POST") {
       return addUserHandler(req, res);
     } else if (url === "/api/login" && method === "POST") {
       return loginHandler(req, res);
+    } else if (url === "/api/session" && method === "GET") {
+      return validateSessionHandler(req, res);
+    } else if (url === "/api/logout" && method === "POST") {
+      return logoutHandler(req, res);
     } else if (url === "/api/forgot-password" && method === "POST") {
       return forgotPasswordHandler(req, res);
     } else if (url === "/api/reset-password" && method === "POST") {
@@ -135,6 +183,37 @@ export default async function handler(req, res) {
       return cleanupDataHandler(req, res);
     } else if (url === "/api/update-user" && method === "PUT") {
       return updateUserHandler(req, res);
+    } else if (url === "/api/dashboard/upload" && method === "POST") {
+      const file = await parseUploadedFile(req);
+
+      if (!file) {
+        return res.status(400).json({ message: "File Excel tidak ditemukan" });
+      }
+
+      const extension = file.originalname
+        ? `.${file.originalname.split(".").pop().toLowerCase()}`
+        : "";
+
+      if (!SUPPORTED_EXTENSIONS.includes(extension)) {
+        return res.status(400).json({
+          message: "Format file tidak didukung. Gunakan file .xlsx atau .xls",
+        });
+      }
+
+      const options = {
+        originalName: file.originalname,
+        preferredSheet: req.query?.sheet || file.fields.sheetName?.[0],
+      };
+      const dashboard = buildSlideDashboardFromWorkbook(file.buffer, options);
+
+      const fields = file.fields || {};
+      const includeRaw = req.query?.includeRaw === "true" || fields.includeRaw?.[0] === "true";
+
+      if (includeRaw) {
+        dashboard.rawDashboard = buildDashboardFromWorkbook(file.buffer, options);
+      }
+
+      return res.status(200).json({ message: "File berhasil diproses.", data: dashboard });
     }
 
     return res.status(404).json({ message: "Rute tidak ditemukan" });
