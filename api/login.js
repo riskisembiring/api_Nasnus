@@ -1,7 +1,6 @@
 import bcrypt from 'bcrypt';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../config/firebase-config.js';
-import { createActiveSession } from './session.js';
 
 // Login User Handler
 export const loginHandler = async (req, res) => {
@@ -43,20 +42,10 @@ export const loginHandler = async (req, res) => {
       return res.status(401).json({ message: 'Password salah' });
     }
 
-    if (user.activeSessionId) {
-      return res.status(409).json({
-        message: 'User ini sudah login di browser atau device lain. Silahkan logout terlebih dahulu.',
-        code: 'SESSION_ALREADY_ACTIVE',
-      });
-    }
-
-    const sessionId = await createActiveSession(userDoc.id);
-
     res.status(200).json({ 
       message: `Berhasil login sebagai '${user.userRole}'`, 
       role: user.userRole, 
       username: user.username,
-      sessionId,
     });
   } catch (error) {
     res

@@ -26,11 +26,7 @@ import {
   buildSlideDashboardFromWorkbook,
   SUPPORTED_EXTENSIONS,
 } from "./api/dashboardExcelService.js";
-import {
-  logoutHandler,
-  requireActiveSession,
-  validateSessionHandler,
-} from "./api/session.js";
+import { logoutHandler, validateSessionHandler } from "./api/session.js";
 import formidable from "formidable";
 import { readFile, unlink } from "node:fs/promises";
 
@@ -90,27 +86,6 @@ const setCorsHeaders = (res) => {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization"); // Header yang diizinkan
 };
 
-const protectedRoutes = [
-  { url: "/api/data", methods: ["GET", "POST"] },
-  { prefix: "/api/data/", methods: ["PUT"] },
-  { url: "/api/submit-kredit", methods: ["POST"] },
-  { url: "/api/data-mak", methods: ["GET", "POST"] },
-  { prefix: "/api/update-mak", methods: ["PUT"] },
-  { url: "/api/delete-mak", methods: ["DELETE"] },
-  { url: "/api/upload", methods: ["POST"] },
-  { url: "/api/uploadMak", methods: ["POST"] },
-  { url: "/api/delete-imagekit", methods: ["POST"] },
-  { url: "/api/cleanup-data", methods: ["POST"] },
-  { url: "/api/update-user", methods: ["PUT"] },
-];
-
-const routeNeedsSession = (url, method) => {
-  return protectedRoutes.some((route) => {
-    const urlMatches = route.url ? route.url === url : url.startsWith(route.prefix);
-    return urlMatches && route.methods.includes(method);
-  });
-};
-
 // Ekspor handler utama untuk Vercel
 export default async function handler(req, res) {
   const { method } = req;
@@ -125,14 +100,6 @@ export default async function handler(req, res) {
   try {
     // Menambahkan CORS untuk setiap respons
     setCorsHeaders(res);
-
-    if (routeNeedsSession(url, method)) {
-      const hasActiveSession = await requireActiveSession(req, res);
-
-      if (!hasActiveSession) {
-        return;
-      }
-    }
 
     // Menangani rute sesuai dengan URL dan metode
     if (url === "/api/add-user" && method === "POST") {
