@@ -27,6 +27,7 @@ import {
   SUPPORTED_EXTENSIONS,
 } from "./api/dashboardExcelService.js";
 import { logoutHandler, validateSessionHandler } from "./api/session.js";
+import { dashboardHistoryHandlers, saveDashboardHistory } from "./api/dashboardHistoryService.js";
 import formidable from "formidable";
 import { readFile, unlink } from "node:fs/promises";
 
@@ -150,6 +151,11 @@ export default async function handler(req, res) {
       return cleanupDataHandler(req, res);
     } else if (url === "/api/update-user" && method === "PUT") {
       return updateUserHandler(req, res);
+    } else if (url === "/api/dashboard/history" && method === "GET") {
+      return await dashboardHistoryHandlers.list(req, res);
+    } else if (/^\/api\/dashboard\/history\/[^/]+$/.test(url) && method === "GET") {
+      req.params = { id: url.split('/')[4] };
+      return await dashboardHistoryHandlers.detail(req, res);
     } else if (url === "/api/dashboard/upload" && method === "POST") {
       const file = await parseUploadedFile(req);
 
@@ -176,11 +182,12 @@ export default async function handler(req, res) {
       const fields = file.fields || {};
       const includeRaw = req.query?.includeRaw === "true" || fields.includeRaw?.[0] === "true";
 
-      if (includeRaw) {
-        dashboard.rawDashboard = buildDashboardFromWorkbook(file.buffer, options);
-      }
+      const rawDashboard = buildDashboardFromWorkbook(file.buffer, options);
+      const history = await saveDashboardHistory({ ...dashboard, rawDashboard });
 
-      return res.status(200).json({ message: "File berhasil diproses.", data: dashboard });
+      if (includeRaw) dashboard.rawDashboard = rawDashboard;
+
+      return res.status(200).json({ message: "File berhasil diproses dan history disimpan.", data: dashboard, history });
     }
 
     return res.status(404).json({ message: "Rute tidak ditemukan" });
